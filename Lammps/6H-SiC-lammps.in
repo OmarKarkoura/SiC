@@ -1,0 +1,116 @@
+# -----------
+# Initialization
+# -----------
+
+units metal # g/mol, Angstom, eV, etc..
+dimension 3 # 3D simulation
+boundary p p p # periodic boundary conditions in all 3 spacial directions
+atom_style atomic
+
+# Define simulation parameters
+variable T equal 300.0 # Equilibration temperature (in K)
+
+
+# -----------
+# Define lattice
+# -----------
+
+variable a equal 3.095
+variable b equal 3.095
+variable bx equal -${b}*sqrt(3)*0.5
+variable by equal ${b}*0.5
+variable ax equal ${a}*sqrt(3)*0.5
+variable ay equal ${a}*0.5
+variable c equal 15.185
+lattice custom 1.0 &
+        a1 ${ax} ${ay} 0.0 &
+        a2 ${bx} ${by} 0.0  &
+        a3 0.0 0.0 ${c} &
+        basis 0.66666667  0.33333333  0.33298600 &
+        basis 0.33333333  0.66666667  0.83298600 &
+        basis 0.33333333  0.66666667  0.16650900 &
+        basis 0.66666667  0.33333333  0.66650900 &
+        basis 0.00000000  0.00000000  0.99972300 &
+        basis 0.00000000  0.00000000  0.49972300 &
+        basis 0.00000000  0.00000000  0.37435200 &
+        basis 0.00000000  0.00000000  0.87435200 &
+        basis 0.66666667  0.33333333  0.20800400 &
+        basis 0.33333333  0.66666667  0.70800400 &
+        basis 0.33333333  0.66666667  0.04152600 &
+        basis 0.66666667  0.33333333  0.54152600
+
+
+# -----------
+# Define simulation box
+# -----------
+
+region box block 0 5 0 5 0 5  # We define a region called "box" of dimensions 20x20x20 unit cell
+create_box      12 box        # We create a simulation box containing 12 atom types using this region
+
+
+# -----------
+# Create atoms
+# -----------
+
+# Each atom 6xSi + 6xC in the unit cell is its own "LAMMPS atom type"
+# I think this might become handy later when analyzing the collision cascades.
+
+create_atoms    1 box           &
+        basis   1       1       &
+        basis   2       2       &
+        basis   3       3       &
+        basis   4       4       &
+        basis   5       5       &
+        basis   6       6       &
+        basis   7       7       &
+        basis   8       8       &
+        basis   9       9       &
+        basis   10      10      &
+        basis   11      11      &
+        basis   12      12
+
+
+mass *6 28.0855 # Si mass in g/mol
+mass 7* 12.011  # C mass in g/mol
+
+
+# -----------
+# Define pair potentials
+# -----------
+
+pair_style tersoff/zbl
+pair_coeff * * SiC.tersoff.zbl Si Si Si Si Si Si C C C C C C
+
+
+# -----------
+# Setup properties to compute
+# -----------
+
+compute temp all temp
+compute coordination all coord/atom cutoff 2.2
+compute Ekin all ke/atom
+
+
+
+# -----------
+# Setup thermal equilibration phase
+# -----------
+
+# We do a very simple simulation first:
+# We fix the temperature to the variable $T (i.e. 300K) and the volume of the simulation box (nvt ensemble).
+# Then we let the system evolve over a period of 1000 timesteps (i.e. 1000*1e-3 ps = 1ps)
+
+print "Setup thermal equilibration phase..."
+
+reset_timestep 0
+
+fix 1 all nve
+fix 2 all temp/rescale 1 $T $T 0.5 1.0 region box
+
+timestep 0.001
+thermo 100
+thermo_style custom step temp pe etotal press
+dump 1 all custom 100 thermal_equilibration_6H.dump x y z c_Ekin id type c_coordination
+
+print "Run first thermal equilibration phase (1000 steps)..."
+run 100000
