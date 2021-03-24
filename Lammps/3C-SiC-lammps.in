@@ -1,6 +1,7 @@
 
 # Initialization
-# -----------
+# -------------
+
 
 units metal # g/mol, Angstom, eV, etc..
 dimension 3 # 3D simulation
