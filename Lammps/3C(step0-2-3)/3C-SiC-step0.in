@@ -1,0 +1,213 @@
+# ==================================
+# Step 0: Setup simulation box and atoms
+# Author: Lukas Botsch <lukas.botsch@uni-leipzig.de>
+#
+#
+# ==================================
+
+
+
+# -----------
+# Initialization
+# -----------
+
+units metal # g/mol, Angstom, eV, etc..
+dimension 3 # 3D simulation
+boundary p p p # periodic boundary conditions in all 3 spacial directions
+atom_style atomic
+
+
+# -----------
+# Define variables
+# -----------
+
+# NOTE: supercell dimensions must be even multiple of unit cell!
+variable Nx equal 20 # Number of unitcells in the box, along (100) direction
+variable Ny equal 20 # Number of unitcells in the box
+variable Nz equal 20 # Number of unitcells in the box
+
+variable NBorder equal 2 # Number of unitcells of border
+
+# -----------
+# Define lattice
+# -----------
+
+variable a equal 4.37956
+lattice custom $a &
+        a1 1.0 0.0  0.0  &
+        a2 0.0 1.0  0.0  &
+        a3 0.0 0.0  1.0  &
+        basis 0.00 0.00 0.00 &
+        basis 0.00 0.50 0.50 &
+        basis 0.50 0.00 0.50 &
+        basis 0.50 0.50 0.00 &
+        basis 0.25 0.25 0.75 &
+        basis 0.25 0.75 0.25 &
+        basis 0.75 0.25 0.25 &
+        basis 0.75 0.75 0.75
+
+
+
+# -----------
+# Define simulation box
+# -----------
+
+
+variable BoxHx equal ${Nx}*${a}
+variable BoxHy equal ${Ny}*${a}
+variable BoxHz equal ${Nz}*${a}
+region box block 0.0 ${BoxHx} &
+                 0.0 ${BoxHy} &
+                 0.0 ${BoxHz} &
+                 units box
+
+create_box      8 box        # We create a simulation box containing 12 atom types using this region
+
+# -----------
+# Create atoms
+# -----------
+
+# Each atom 6xSi + 6xC in the unit cell is its own "LAMMPS atom type"
+# I think this might become handy later when analyzing the collision cascades.
+
+create_atoms    1 box           &
+        basis   1       1       &
+        basis   2       2       &
+        basis   3       3       &
+        basis   4       4       &
+        basis   5       5       &
+        basis   6       6       &
+        basis   7       7       &
+        basis   8       8
+
+
+mass *4 12.011  # C mass in g/mol
+mass 5* 28.0855 # Si mass in g/mol
+
+dump 1 all atom 100 dump.atom
+run 0
+undump 1
+
+# -----------
+# Define atom groups
+# -----------
+
+# Define border groups
+
+variable innerLx equal ${NBorder}*$a
+variable innerHx equal (${Nx}-${NBorder})*$a
+variable innerLy equal ${NBorder}*$a
+variable innerHy equal (${Ny}-${NBorder})*$a
+variable innerLz equal ${NBorder}*$a
+variable innerHz equal (${Nz}-${NBorder})*$a
+
+region rinterior block ${innerLx} ${innerHx} ${innerLy} ${innerHy} ${innerLz} ${innerHz} units box
+region rexterior block ${innerLx} ${innerHx} ${innerLy} ${innerHy} ${innerLz} ${innerHz} side out units box
+group interior region rinterior
+group exterior region rexterior
+
+
+# Define PKA groups
+
+variable PKAboxLx equal (${Nx}/2-0.5)*$a
+variable PKAboxHx equal (${Nx}/2+0.5)*$a
+variable PKAboxLy equal (${Ny}/2-0.5)*$a
+variable PKAboxHy equal (${Ny}/2+0.5)*$a
+variable PKAboxLz equal (${Nz}/2-0.5)*$a
+variable PKAboxHz equal (${Nz}/2+0.5)*$a
+
+region rPKAbox block ${PKAboxLx} ${PKAboxHx} ${PKAboxLy} ${PKAboxHy} ${PKAboxLz} ${PKAboxHz} units box
+
+
+group PKAbox region rPKAbox
+
+# == PKA 1 ==
+group PKAtype type 1
+group PKA1 intersect PKAbox PKAtype
+group PKAtype delete
+# Make sure we only select ONE PKA atom
+variable NumAtomsInPKAGroup equal count(PKA1)
+if "${NumAtomsInPKAGroup} != 1" then &
+   "print '[ERROR] PKA1 group contains ${NumAtomsInPKAGroup} atoms!'" &
+   "quit"
+
+# == PKA 2 ==
+group PKAtype type 2
+group PKA2 intersect PKAbox PKAtype
+group PKAtype delete
+# Make sure we only select ONE PKA atom
+variable NumAtomsInPKAGroup equal count(PKA2)
+if "${NumAtomsInPKAGroup} != 1" then &
+   "print '[ERROR] PKA2 group contains ${NumAtomsInPKAGroup} atoms!'" &
+   "quit"
+
+# == PKA 3 ==
+group PKAtype type 3
+group PKA3 intersect PKAbox PKAtype
+group PKAtype delete
+# Make sure we only select ONE PKA atom
+variable NumAtomsInPKAGroup equal count(PKA3)
+if "${NumAtomsInPKAGroup} != 1" then &
+   "print '[ERROR] PKA3 group contains ${NumAtomsInPKAGroup} atoms!'" &
+   "quit"
+
+# == PKA 4 ==
+group PKAtype type 4
+group PKA4 intersect PKAbox PKAtype
+group PKAtype delete
+# Make sure we only select ONE PKA atom
+variable NumAtomsInPKAGroup equal count(PKA4)
+if "${NumAtomsInPKAGroup} != 1" then &
+   "print '[ERROR] PKA4 group contains ${NumAtomsInPKAGroup} atoms!'" &
+   "quit"
+
+# == PKA 5 ==
+group PKAtype type 5
+group PKA5 intersect PKAbox PKAtype
+group PKAtype delete
+# Make sure we only select ONE PKA atom
+variable NumAtomsInPKAGroup equal count(PKA5)
+if "${NumAtomsInPKAGroup} != 1" then &
+   "print '[ERROR] PKA5 group contains ${NumAtomsInPKAGroup} atoms!'" &
+   "quit"
+
+# == PKA 6 ==
+group PKAtype type 6
+group PKA6 intersect PKAbox PKAtype
+group PKAtype delete
+# Make sure we only select ONE PKA atom
+variable NumAtomsInPKAGroup equal count(PKA6)
+if "${NumAtomsInPKAGroup} != 1" then &
+   "print '[ERROR] PKA6 group contains ${NumAtomsInPKAGroup} atoms!'" &
+   "quit"
+
+# == PKA 7 ==
+group PKAtype type 7
+group PKA7 intersect PKAbox PKAtype
+group PKAtype delete
+# Make sure we only select ONE PKA atom
+variable NumAtomsInPKAGroup equal count(PKA7)
+if "${NumAtomsInPKAGroup} != 1" then &
+   "print '[ERROR] PKA7 group contains ${NumAtomsInPKAGroup} atoms!'" &
+   "quit"
+
+# == PKA 8 ==
+group PKAtype type 8
+group PKA8 intersect PKAbox PKAtype
+group PKAtype delete
+# Make sure we only select ONE PKA atom
+variable NumAtomsInPKAGroup equal count(PKA8)
+if "${NumAtomsInPKAGroup} != 1" then &
+   "print '[ERROR] PKA8 group contains ${NumAtomsInPKAGroup} atoms!'" &
+   "quit"
+
+
+
+group PKAbox delete
+
+
+# -----------
+# Write binary restart file
+# -----------
+
+write_restart 3C-SiC-restart.bin

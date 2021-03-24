@@ -1,0 +1,98 @@
+# ==================================
+# Step 3: Single collision cascade
+# Author: Lukas Botsch <lukas.botsch@uni-leipzig.de>
+#
+#
+# ==================================
+
+
+# -----------
+# Read state of previous step
+# -----------
+
+read_restart ../step2/3C-SiC-restart.bin
+
+
+# -----------
+# Define variables
+# -----------
+
+# Define simulation parameters
+variable T equal 300.0 # Equilibration temperature (in K)
+
+variable PKAatomtype equal 1   # The type of atom to use as PKA (1-6: Si, 7-12: C)
+variable PKAenergy equal 100.0 # Kinetic energy of PKA
+variable PKAtheta equal 10.0    # Polar angle of initial PKA direction (in degrees) 0 <= PKAtheta <= 180
+variable PKAphi equal 0.0      # Azimuthal angle of initial PKA direction (in degrees) 0 <= PKAphi < 360
+
+variable dumpEvery equal 500 # Dump atoms every X timesteps during collision simulation
+
+
+# -----------
+# Define pair potentials
+# -----------
+
+pair_style tersoff/zbl
+pair_coeff * * SiC.tersoff.zbl Si Si Si Si C C C C
+
+
+# -----------
+# Setup properties to compute
+# -----------
+
+compute temp all temp
+compute coordination all coord/atom cutoff 2.2
+compute Ekin all ke/atom
+
+
+# -----------
+# Setup collision phase
+# -----------
+
+# Reset all velocities to 0
+velocity all zero linear
+
+# spherical coords
+variable mPKA equal mass(PKA${PKAatomtype})*1e-3/6.022e23          # PKA mass (in kg)
+variable ePKA equal ${PKAenergy}*1.6e-19             # PKA energy (in J)
+variable vPKAr equal sqrt(2.0*${ePKA}/${mPKA})*1e-2  # |v| in Angstrom/ps
+
+# Calculate initial velocity in cartesian coords
+variable vPKAx equal -1.0*${vPKAr}*cos(${PKAphi}*PI/180.0)*sin(${PKAtheta}*PI/180.0)
+variable vPKAy equal -1.0*${vPKAr}*sin(${PKAphi}*PI/180.0)*sin(${PKAtheta}*PI/180.0)
+variable vPKAz equal -1.0*${vPKAr}*cos(${PKAtheta}*PI/180.0)
+
+# Set the velocity of the PKA
+velocity PKA${PKAatomtype} set v_vPKAx v_vPKAy v_vPKAz units box
+print "Initial PKA velocity: (${vPKAx}, ${vPKAy}, ${vPKAz})"
+
+fix 1 all nve
+
+# Set atom temp to $T in the exterior region
+fix 2 exterior temp/rescale 1 $T $T 0.0 1.0
+
+reset_timestep 0
+
+dump 1 all custom ${dumpEvery} collision.dump x y z c_Ekin id type c_coordination
+thermo 100
+
+# Initial phase with low timestep 0.01fs (runs for 0.1ps)
+timestep 0.00001
+run 10000
+
+# Intermediate phase with timestep 0.1fs (runs for 1ps)
+timestep 0.0001
+run 10000
+
+# Final phase with timestep 1fs (runs for 10ps)
+timestep 0.001
+run 10000
+
+undump 1
+
+
+# -----------
+# Save state in a binary restart file
+# -----------
+
+write_restart 3C-SiC-restart.bin

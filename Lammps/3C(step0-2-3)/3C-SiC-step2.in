@@ -1,0 +1,73 @@
+# ==================================
+# Step 2: Thermal equilibration
+# Author: Lukas Botsch <lukas.botsch@uni-leipzig.de>
+#
+#
+# ==================================
+
+
+# -----------
+# Read state of previous step
+# -----------
+
+read_restart ../step0/3C-SiC-restart.bin
+
+
+# -----------
+# Define variables
+# -----------
+
+# Define simulation parameters
+variable T equal 300.0 # Equilibration temperature (in K)
+
+variable dumpEvery equal 500 # Dump atoms every X timesteps during collision simulation
+
+
+# -----------
+# Define pair potentials
+# -----------
+
+pair_style tersoff/zbl
+pair_coeff * * SiC.tersoff.zbl C C C C Si Si Si Si
+
+
+# -----------
+# Setup properties to compute
+# -----------
+
+compute temp all temp
+compute coordination all coord/atom cutoff 2.2
+compute Ekin all ke/atom
+
+
+# -----------
+# Setup thermal equilibration phase
+# -----------
+
+# We do a very simple simulation first:
+# We fix the temperature to the variable $T (i.e. 300K) and the volume of the simulation box (nvt ensemble).
+# Then we let the system evolve over a period of 1000 timesteps (i.e. 1000*1e-3 ps = 1ps)
+
+print "Setup thermal equilibration phase..."
+
+reset_timestep 0
+
+fix 1 all nve
+fix 2 all temp/rescale 1 $T $T 0.05 1.0
+
+thermo 100
+thermo_style custom step temp pe etotal press
+dump 1 all custom 100 thermal_equilibration.dump x y z c_Ekin id type c_coordination
+
+timestep 0.001
+run 10000
+
+unfix 2
+undump 1
+
+
+# -----------
+# Save state in a binary restart file
+# -----------
+
+write_restart 3C-SiC-restart.bin
