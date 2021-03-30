@@ -26,10 +26,10 @@ def open_file(dataFrame):
 
 
 
-url_30K = "/Users/omarkarkoura/Library/Mobile Documents/com~apple~CloudDocs/Project:Thesis/Project/SiC Experimental Data:Results/SiC3/Hyst at 30K/SiC3_hyst_30K_FinalData.csv"
-url_300K = "/Users/omarkarkoura/Library/Mobile Documents/com~apple~CloudDocs/Project:Thesis/Project/SiC Experimental Data:Results/SiC3/Hyst at 300K/SiC3_hyst_300K_FinalData.csv"
-url_tempDepend = "/Users/omarkarkoura/Library/Mobile Documents/com~apple~CloudDocs/Project:Thesis/Project/SiC Experimental Data:Results/SiC3/Temperature Dependance/SiC3_temp_dep_FinalData.csv"
-pd_30K_url = "/Users/omarkarkoura/Library/Mobile Documents/com~apple~CloudDocs/Project:Thesis/Project/SiC Experimental Data:Results/Pd_callibration/Hyst at 30K/callibration_data_30K_hyst_finalData.csv"    # I use the data in this file for performing corrections
+url_30K = ""
+url_300K = ""
+url_tempDepend = ""
+pd_30K_url = ""    # I use the data in this file for performing corrections
 
 
 pd_30K = pd.read_csv(pd_30K_url)
