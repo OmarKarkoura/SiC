@@ -56,12 +56,16 @@ def select_defects_modifier(frame, data):
     selection = data.particles_.create_property('Selection')
 
     # TODO Create a mask (boolean numpy array) to identify basic defect sites
-    vacancy_mask = np.zeros(data.particles.count)
-    interstitial_mask = np.zeros(data.particles.count)
-    antisite_mask = np.zeros(data.particles.count)
+    v =data.particles["Occupancy"][np.arange(data.particles.count),(data.particles['Particle Type'][...] -1)]
+    vacancy_mask =(total_occupancy ==0).astype(int)
+    interstitial_mask = (total_occupancy >1).astype(int)
+    antisite_mask = ((v==0) & (total_occupancy >0)).astype(int)
 
-    selection[...] = vacancy_mask | interstitial_mask | replacement_mask
+    data.particles_.create_property('vacancy_mask', data=vacancy_mask)
+    data.particles_.create_property('interstitial_mask', data=interstitial_mask)
+    data.particles_.create_property('antisite_mask', data=antisite_mask)
 
+    selection[...] = vacancy_mask | interstitial_mask | antisite_mask
 def classify_defect_clusters_modifier(frame, data):
     """This modifier identifies basic defects at each atomic site and saves the
     counts in new particle properties `Si_V` (Si vacancy), `Si_I` (Si
@@ -83,14 +87,21 @@ def classify_defect_clusters_modifier(frame, data):
     # TODO Create numpy arrays containing the number of Si vacancies,
     #      interstitials, etc for each particle site in `data.particles`. These
     #      next lines are just placeholders!
-    si_vacancy = np.zeros(data.particles.count)
-    si_interstitial = np.zeros(data.particles.count)
-    si_antisite = np.zeros(data.particles.count)
-    c_vacancy = np.zeros(data.particles.count)
-    c_interstitial = np.zeros(data.particles.count)
-    c_antisite = np.zeros(data.particles.count)
+    si_vacancy = data.particles["vacancy_mask"][...] * data.particles["Is Si Site"][...]
+    si_interstitial = (data.particles["Is Si Site"][...] & (data.particles["Si Occupancy"][...] > 1)) * (
+                data.particles["Si Occupancy"][...] - 1) + (
+                                  (data.particles["Is C Site"][...]) * data.particles["Si Occupancy"][...]) - (
+                                  data.particles["Is C Site"][...] & data.particles["antisite_mask"][...])
+    si_antisite = data.particles["antisite_mask"][...] * data.particles["Is Si Site"][...]
+    c_vacancy = data.particles["vacancy_mask"][...] * data.particles["Is C Site"][...]
+    c_interstitial = (data.particles["Is C Site"][...] & (data.particles["C Occupancy"][...] > 1)) * (
+                data.particles["C Occupancy"][...] - 1) + (
+                                 (data.particles["Is Si Site"][...]) * data.particles["C Occupancy"][...]) - (
+                                 data.particles["Is Si Site"][...] & data.particles["antisite_mask"][...])
+    c_antisite = data.particles["antisite_mask"][...] * data.particles["Is C Site"][...]
 
-    data.particles_.create_property('Si_V', data=si_vacancy.astype(int))
+
+data.particles_.create_property('Si_V', data=si_vacancy.astype(int))
     data.particles_.create_property('Si_I', data=si_interstitial.astype(int))
     data.particles_.create_property('Si_C', data=si_antisite.astype(int))
     data.particles_.create_property('C_V', data=c_vacancy.astype(int))
