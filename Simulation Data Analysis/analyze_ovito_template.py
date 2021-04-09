@@ -22,8 +22,8 @@ def total_occupancy_modifier(frame, data):
 
     occupancies = data.particles['Occupancy'][...]
     site_type = data.particles['Particle Type'][...]
-    num_site_types = occupancies.shape[1]
-    total_occupancy = np.sum(occupancies, axis=1)
+    num_site_types = occupancies.shape[1] #Accessing the number of columns in the Occupancy matrix
+    total_occupancy = np.sum(occupancies, axis=1) #Summing over all columns
     # NOTE By convention, the first half of types is Si, the second half is C
     is_si_site = site_type <= num_site_types//2
     is_c_site = site_type > num_site_types//2
@@ -101,7 +101,7 @@ def classify_defect_clusters_modifier(frame, data):
     c_antisite = data.particles["antisite_mask"][...] * data.particles["Is C Site"][...]
 
 
-data.particles_.create_property('Si_V', data=si_vacancy.astype(int))
+    data.particles_.create_property('Si_V', data=si_vacancy.astype(int))
     data.particles_.create_property('Si_I', data=si_interstitial.astype(int))
     data.particles_.create_property('Si_C', data=si_antisite.astype(int))
     data.particles_.create_property('C_V', data=c_vacancy.astype(int))
