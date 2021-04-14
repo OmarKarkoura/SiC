@@ -12,7 +12,7 @@ pd.set_option('display.max_columns', 150)
 
 
 
-df = pd.DataFrame(pd.read_csv("/Users/omarkarkoura/Library/Mobile Documents/com~apple~CloudDocs/Project:Thesis/Project/SImulation Analysis/First Run/clusters.csv"))
+df = pd.DataFrame(pd.read_csv(""))
 df["tuple"] = list(zip(df["C_V"],df["C_I"],df["C_Si"],df["Si_V"],df["Si_I"],df["Si_C"]))
 df["total"] = 1
 df.drop(["PKA ID","Grid","PKA Theta","PKA Phi"],axis=1, inplace=True)
@@ -60,8 +60,8 @@ def labelFunc(tuple_list):
     names_list = []
     return_string = ''
     for i in label_dict.keys():
-        if tuple_list[i] == 1:
-            names_list.append(label_dict[i])
+        if tuple_list[i] != 0:
+            names_list.append(str(tuple_list[i])+label_dict[i])
     if names_list.count == 1:
         return_string = names_list[0]
     else:
@@ -85,7 +85,7 @@ ax1.set_ylabel("Count")
 ax2.set_ylabel("Count")
 ax1.title.set_text("C PKA defect")
 ax2.title.set_text("Si PKA defect")
-ax1.legend(bbox_to_anchor=(-0.1, 1))
+ax1.legend(bbox_to_anchor=(-0.05, 1))
 ax2.legend(bbox_to_anchor=(1.01, 1))
 plt.savefig("test.png")
 plt.show()
