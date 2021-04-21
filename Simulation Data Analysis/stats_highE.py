@@ -65,8 +65,8 @@ def labelFunc(tuple_list):
     names_list = []
     return_string = ''
     for i in label_dict.keys():
-        if tuple_list[i] == 1:
-            names_list.append(label_dict[i])
+        if tuple_list[i] != 0:
+            names_list.append(str(tuple_list[i])+label_dict[i])
     if names_list.count == 1:
         return_string = names_list[0]
     else:
